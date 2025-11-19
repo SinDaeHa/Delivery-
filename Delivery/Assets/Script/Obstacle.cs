@@ -26,6 +26,18 @@ public class Obstacle : MonoBehaviour
 
             // 나중에 GameManager를 만들면 이렇게 바꿀 수 있음:
             // FindObjectOfType<GameManager>().GameOver();
+
+            GameManager gm = FindObjectOfType<GameManager>();
+
+            if (gm != null)
+            {
+                gm.GameOver();
+            }
+            else
+            {
+                Debug.LogWarning("GameManager 오브젝트 확인 필요.");
+            }
+
         }
     }
 }
