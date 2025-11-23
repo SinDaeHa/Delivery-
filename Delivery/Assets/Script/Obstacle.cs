@@ -2,8 +2,10 @@ using UnityEngine;
 
 public class Obstacle : MonoBehaviour
 {
+    [Header("Car Setting")]
     public float moveSpeed = 4f;
     public float destroyY = -13f;
+    private float originalSpeed;
 
     void Update()
     {
@@ -15,29 +17,29 @@ public class Obstacle : MonoBehaviour
         }
     }
 
+    public void PauseSpeed()
+    {
+        originalSpeed = moveSpeed;
+        moveSpeed = 0f;
+    }
+
+    public void ResumeSpeed()
+    {
+        moveSpeed = originalSpeed;
+    }
+
     private void OnTriggerEnter2D(Collider2D other)
     {
+        // 플레이어와 부딪혔을 때만 처리
         if (other.CompareTag("Player"))
         {
-            Debug.Log("플레이어와 충돌! 게임 오버 처리");
+            HeartSystem hs = FindObjectOfType<HeartSystem>();
 
-            // 간단한 게임 오버 예시
-            Time.timeScale = 0f; // 게임 멈추기
-
-            // 나중에 GameManager를 만들면 이렇게 바꿀 수 있음:
-            // FindObjectOfType<GameManager>().GameOver();
-
-            GameManager gm = FindObjectOfType<GameManager>();
-
-            if (gm != null)
+            if (hs != null)
             {
-                gm.GameOver();
+                // HeartSystem이 적을 제거하고 하트 처리까지 한다
+                hs.TakeDamage(gameObject);
             }
-            else
-            {
-                Debug.LogWarning("GameManager 오브젝트 확인 필요.");
-            }
-
         }
     }
 }
