@@ -10,9 +10,13 @@ public class ObstacleSpawner : MonoBehaviour
     public float spawnY = 13f;
     public float[] laneX = new float[4] { -4.5f, -1.5f, 1.5f, 4.5f };
 
+    [Header("Spawn Term Setting")]
+    public float spawnTerm = 3f;
+
     private float timer = 0f;
     private float spawnDistance;
     private float obstacleSpeed;
+    [HideInInspector]
     public bool canSpawn = true;
 
 
@@ -26,7 +30,7 @@ public class ObstacleSpawner : MonoBehaviour
         // 기존 spawnDistance 계산 로직 유지
         SpriteRenderer sr = carPrefabs[0].GetComponent<SpriteRenderer>();
         float carHeight = sr.bounds.size.y;
-        spawnDistance = carHeight * 3f;
+        spawnDistance = carHeight * spawnTerm;
     }
 
     void Update()
