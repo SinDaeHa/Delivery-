@@ -301,8 +301,8 @@ MonoBehaviour:
   lightGreen: {fileID: 1401959609}
   lightYellow: {fileID: 1304096339}
   lightRed: {fileID: 1297719535}
-  greenMinTime: 30
-  greenMaxTime: 40
+  greenMinTime: 20
+  greenMaxTime: 30
   yellowTime: 3
   redMinTime: 4
   redMaxTime: 6
