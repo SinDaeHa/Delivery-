@@ -79,6 +79,19 @@ public class HeartSystem : MonoBehaviour
         currentHearts++;
     }
 
+    public int GetCurrentHearts()
+    {
+        return currentHearts;
+    }
+
+    public void ForceRemoveHeart()
+    {
+        if (currentHearts <= 0) return;
+
+        currentHearts--;
+        Destroy(hearts[currentHearts]);
+        hearts[currentHearts] = null;
+    }
 
     private IEnumerator HeartsBlinkRoutine(float duration)
     {

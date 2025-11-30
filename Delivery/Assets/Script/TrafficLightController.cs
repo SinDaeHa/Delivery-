@@ -19,18 +19,22 @@ public class TrafficLightController : MonoBehaviour
     public float redMinTime = 4f;
     public float redMaxTime = 6f;
 
-    private bool isRed = false;         // 현재 빨간불 상태인가?
-    private bool playerMoved = false;   // 빨간불 상태에서 플레이어가 움직였나?
+    private bool isRed = false;
+    private bool playerMoved = false;
 
     private PlayerController player;
     private HeartSystem heartSystem;
     private ObstacleSpawner spawner;
+    private AutoLoopBackground bg;   // 🔥 여기 변경됨 (중요!)
 
     void Start()
     {
         player = FindObjectOfType<PlayerController>();
         heartSystem = FindObjectOfType<HeartSystem>();
         spawner = FindObjectOfType<ObstacleSpawner>();
+
+        // 🔥 새로운 배경 스크립트
+        bg = FindObjectOfType<AutoLoopBackground>();
 
         StartCoroutine(LightCycleRoutine());
     }
@@ -42,50 +46,57 @@ public class TrafficLightController : MonoBehaviour
             // ---------------- GREEN ----------------
             float greenTime = Random.Range(greenMinTime, greenMaxTime);
             ShowLight("GREEN");
-            isRed = false;
 
-            // 스폰 재개
-            if (spawner != null)
+            isRed = false;
+            playerMoved = false;
+
+            if (spawner != null) 
                 spawner.canSpawn = true;
 
-            // 멈춰있던 적 다시 움직이기
             FreezeObstacles(false);
+
+            if (bg != null)
+                bg.SetRedLight(false);  // 🔥 배경 움직임 ON
 
             yield return new WaitForSeconds(greenTime);
 
             // ---------------- YELLOW ----------------
             ShowLight("YELLOW");
+
             isRed = false;
+
+            if (bg != null)
+                bg.SetRedLight(false); // 움직임 계속
 
             yield return new WaitForSeconds(yellowTime);
 
             // ---------------- RED ----------------
             float redTime = Random.Range(redMinTime, redMaxTime);
             ShowLight("RED");
+
             isRed = true;
             playerMoved = false;
 
-            // 장애물 스폰 금지
             if (spawner != null)
                 spawner.canSpawn = false;
 
-            // 현재 존재하는 적들 모두 멈추기
             FreezeObstacles(true);
 
-            // 빨간불 유지 시간
+            if (bg != null)
+                bg.SetRedLight(true);  // 🔥 배경 멈춤
+
             float timer = 0f;
+
             while (timer < redTime)
             {
                 timer += Time.deltaTime;
 
-                // 빨간불 동안 플레이어 움직임 감지
                 if (!playerMoved && PlayerTryingToMove())
                 {
                     playerMoved = true;
 
-                    // 벌칙: 충돌 처리와 동일
                     if (heartSystem != null)
-                        heartSystem.TakeDamage(null);  // null = 충돌한 적 없음
+                        heartSystem.TakeDamage(null);
 
                     player.TriggerSlowdown();
                     player.TriggerInvincible();
@@ -93,12 +104,8 @@ public class TrafficLightController : MonoBehaviour
 
                 yield return null;
             }
-
-            // 빨간불 종료 → 루프 반복
         }
     }
-
-    // ---------------- LIGHT CONTROL ----------------
 
     void ShowLight(string type)
     {
@@ -107,22 +114,15 @@ public class TrafficLightController : MonoBehaviour
         lightRed.SetActive(type == "RED");
     }
 
-    // ---------------- OBSTACLE FREEZE ----------------
-
     void FreezeObstacles(bool stop)
     {
         Obstacle[] all = FindObjectsOfType<Obstacle>();
-
         foreach (var obs in all)
         {
-            if (stop)
-                obs.PauseSpeed();
-            else
-                obs.ResumeSpeed();
+            if (stop) obs.PauseSpeed();
+            else obs.ResumeSpeed();
         }
     }
-
-    // ---------------- PLAYER MOVEMENT CHECK ----------------
 
     bool PlayerTryingToMove()
     {

@@ -3,39 +3,48 @@ using System.Collections.Generic;
 
 public class ObstacleSpawner : MonoBehaviour
 {
-    [Header("Prefaps List")]
-    public GameObject[] carPrefabs;   // 여러 개의 Car 프리팹을 배열로 받음
+    [Header("Car Prefabs (Default Cars)")]
+    public GameObject[] carPrefabs;
 
-    [Header("Locate Setting")]
-    public float spawnY = 13f;
+    [Header("New Obstacle Prefabs")]
+    public GameObject busPrefab;
+    public GameObject speedBumpPrefab;
+    public GameObject manholePrefab;
+
+    [Header("Toggle Spawn Types")]
+    public bool spawnBus = true;
+    public bool spawnSpeedBump = true;
+    public bool spawnManhole = true;
+
+    [Header("Spawn Settings")]
+    public float spawnY = 17f;
     public float[] laneX = new float[4] { -4.5f, -1.5f, 1.5f, 4.5f };
-
-    [Header("Spawn Term Setting")]
-    public float spawnTerm = 3f;
+    public float SpawnTerm = 3f;
 
     private float timer = 0f;
     private float spawnDistance;
     private float obstacleSpeed;
-    [HideInInspector]
+
     public bool canSpawn = true;
 
+    // 🔥 버스만 다음 웨이브 등장 금지
+    private bool busSpawnedLastWave = false;
 
     void Start()
     {
-        // 첫 Car 프리팹의 moveSpeed 가져오기
         Obstacle obs = carPrefabs[0].GetComponent<Obstacle>();
         if (obs != null)
             obstacleSpeed = obs.moveSpeed;
 
-        // 기존 spawnDistance 계산 로직 유지
         SpriteRenderer sr = carPrefabs[0].GetComponent<SpriteRenderer>();
         float carHeight = sr.bounds.size.y;
-        spawnDistance = carHeight * spawnTerm;
+
+        spawnDistance = carHeight * SpawnTerm;
     }
 
     void Update()
     {
-        if (!canSpawn) return;    // 🔥 추가: 스폰 금지 상태라면 동작하지 않음
+        if (!canSpawn) return;
 
         timer += Time.deltaTime;
         float moved = timer * obstacleSpeed;
@@ -49,35 +58,74 @@ public class ObstacleSpawner : MonoBehaviour
 
     void SpawnWave()
     {
-        if (carPrefabs == null || carPrefabs.Length == 0)
-        {
-            Debug.LogWarning("Car 프리팹이 비어 있습니다.");
-            return;
-        }
-
+        List<int> lanes = new List<int> { 0, 1, 2, 3 };
         int obstacleCount = Random.Range(1, 4);
-        List<int> indices = new List<int> { 0, 1, 2, 3 };
+
+        // 🔥 이번 웨이브 출현 여부
+        bool busSpawnedThisWave = false;
+        bool speedBumpSpawnedThisWave = false;
+        bool manholeSpawnedThisWave = false;
 
         for (int i = 0; i < obstacleCount; i++)
         {
-            int randomIdx = Random.Range(0, indices.Count);
-            int laneIndex = indices[randomIdx];
-            indices.RemoveAt(randomIdx);
+            if (lanes.Count == 0)
+                break;
 
-            // ★ Car 프리팹 랜덤 선택
-            GameObject randomCar = carPrefabs[Random.Range(0, carPrefabs.Length)];
+            int randomIdx = Random.Range(0, lanes.Count);
+            int laneIndex = lanes[randomIdx];
+            lanes.RemoveAt(randomIdx);
 
-            Vector3 spawnPos = new Vector3(laneX[laneIndex], spawnY, 0f);
+            GameObject prefab = ChooseObstacle(
+                ref busSpawnedThisWave,
+                ref speedBumpSpawnedThisWave,
+                ref manholeSpawnedThisWave
+            );
 
-            // ★ Instantiate
-            GameObject carObj = Instantiate(randomCar, spawnPos, Quaternion.identity);
+            if (prefab == null)
+                continue;
 
-            // ★ x축 반전
-            SpriteRenderer sr = carObj.GetComponent<SpriteRenderer>();
-            if (sr != null)
-            {
-                sr.flipY = true; // 이미지 반전
-            }
+            Vector3 pos = new Vector3(laneX[laneIndex], spawnY, 0f);
+            Instantiate(prefab, pos, Quaternion.identity);
         }
+
+        // 🔥 버스만 다음 웨이브 금지
+        busSpawnedLastWave = busSpawnedThisWave;
+    }
+
+    GameObject ChooseObstacle(
+        ref bool busWave,
+        ref bool speedBumpWave,
+        ref bool manholeWave
+    )
+    {
+        List<GameObject> list = new List<GameObject>();
+
+        // 🔥 버스: 한 웨이브 1회 제한 + 다음웨이브도 금지
+        if (spawnBus && !busSpawnedLastWave && !busWave)
+            list.Add(busPrefab);
+
+        // 🔥 스피드범프: 한 웨이브 1회만
+        if (spawnSpeedBump && !speedBumpWave)
+            list.Add(speedBumpPrefab);
+
+        // 🔥 맨홀: 한 웨이브 1회만
+        if (spawnManhole && !manholeWave)
+            list.Add(manholePrefab);
+
+        // 🔥 기본 자동차는 제한 없음
+        foreach (var car in carPrefabs)
+            list.Add(car);
+
+        if (list.Count == 0)
+            return null;
+
+        GameObject pick = list[Random.Range(0, list.Count)];
+
+        // 🔥 이번 웨이브 출현 기록
+        if (pick == busPrefab) busWave = true;
+        if (pick == speedBumpPrefab) speedBumpWave = true;
+        if (pick == manholePrefab) manholeWave = true;
+
+        return pick;
     }
 }

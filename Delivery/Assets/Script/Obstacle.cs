@@ -4,7 +4,8 @@ public class Obstacle : MonoBehaviour
 {
     [Header("Car Setting")]
     public float moveSpeed = 4f;
-    public float destroyY = -13f;
+    public float destroyY = -17f;
+
     private float originalSpeed;
 
     void Update()
@@ -17,6 +18,25 @@ public class Obstacle : MonoBehaviour
         }
     }
 
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            PlayerController player = other.GetComponent<PlayerController>();
+            HeartSystem hs = FindObjectOfType<HeartSystem>();
+
+            OnPlayerHit(player, hs);
+        }
+    }
+
+    // 🔥 각 장애물이 override하도록 설계
+    protected virtual void OnPlayerHit(PlayerController player, HeartSystem hs)
+    {
+        // 기본 장애물(자동차)은 하트 감소
+        if (hs != null)
+            hs.TakeDamage(gameObject);
+    }
+
     public void PauseSpeed()
     {
         originalSpeed = moveSpeed;
@@ -26,20 +46,5 @@ public class Obstacle : MonoBehaviour
     public void ResumeSpeed()
     {
         moveSpeed = originalSpeed;
-    }
-
-    private void OnTriggerEnter2D(Collider2D other)
-    {
-        // 플레이어와 부딪혔을 때만 처리
-        if (other.CompareTag("Player"))
-        {
-            HeartSystem hs = FindObjectOfType<HeartSystem>();
-
-            if (hs != null)
-            {
-                // HeartSystem이 적을 제거하고 하트 처리까지 한다
-                hs.TakeDamage(gameObject);
-            }
-        }
     }
 }

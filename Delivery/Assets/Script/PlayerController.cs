@@ -16,8 +16,11 @@ public class PlayerController : MonoBehaviour
     public float invincibleTime = 3f;
 
     [Header("Hit Slowdown Setting")]
-    public float slowMultiplier = 0.5f;   // 기본 이동속도 50%로 감소
-    public float slowDuration = 2f;       // 기본 감속 지속시간 2초
+    public float slowMultiplier = 0.5f;
+    public float slowDuration = 2f;
+
+    [Header("Booster Invincibility Color")]
+    public Color boosterInvincibleColor = new Color(0f, 1f, 0.5f, 1f); // 부스터 무적 색상
 
     private SpriteRenderer sr;
     private Collider2D col;
@@ -25,7 +28,8 @@ public class PlayerController : MonoBehaviour
     private bool isInvincible = false;
     private bool isSlowed = false;
 
-    private float baseMoveSpeed; // 원래 속도 저장
+    private float baseMoveSpeed;
+    private bool isStageBlinking = false;
 
     void Start()
     {
@@ -40,14 +44,12 @@ public class PlayerController : MonoBehaviour
     {
         float input = Input.GetAxisRaw("Horizontal");
 
-        // 이동
         float currentSpeed = moveSpeed;
         Vector3 pos = transform.position;
         pos.x += input * currentSpeed * Time.deltaTime;
         pos.x = Mathf.Clamp(pos.x, minX, maxX);
         transform.position = pos;
 
-        // 스프라이트 변경
         UpdateSprite(input);
     }
 
@@ -70,9 +72,9 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // --------------------------------------------------------
-    // 🔥 플레이어 무적 + 깜빡임
-    // --------------------------------------------------------
+    // ================================================================
+    // 🔥 일반 무적 (교통신호/피격 등) → 투명 깜빡임
+    // ================================================================
     public void TriggerInvincible()
     {
         if (!isInvincible)
@@ -107,9 +109,9 @@ public class PlayerController : MonoBehaviour
         return isInvincible;
     }
 
-    // --------------------------------------------------------
-    //  🔥 피격 시 이동속도 감소 효과
-    // --------------------------------------------------------
+    // ================================================================
+    // 🔥 슬로우 효과
+    // ================================================================
     public void TriggerSlowdown()
     {
         if (!isSlowed)
@@ -119,15 +121,111 @@ public class PlayerController : MonoBehaviour
     private IEnumerator SlowdownRoutine()
     {
         isSlowed = true;
-
-        // 이동속도 감소: 예) 50%면 0.5배
         moveSpeed = baseMoveSpeed * slowMultiplier;
 
         yield return new WaitForSeconds(slowDuration);
 
-        // 이동속도 복구
         moveSpeed = baseMoveSpeed;
-
         isSlowed = false;
+    }
+
+    public void TriggerCustomSlowdown(float multiplier, float duration)
+    {
+        StartCoroutine(CustomSlowdownRoutine(multiplier, duration));
+    }
+
+    private IEnumerator CustomSlowdownRoutine(float m, float d)
+    {
+        float original = moveSpeed;
+        moveSpeed = baseMoveSpeed * m;
+
+        yield return new WaitForSeconds(d);
+        moveSpeed = original;
+    }
+
+    // ================================================================
+    // 🔥 스테이지 종료용 충돌 OFF + 깜빡임
+    // ================================================================
+    public void DisableCollisionForStageEnd()
+    {
+        if (col != null)
+            col.enabled = false;
+    }
+
+    public void StartBlinking(float duration)
+    {
+        if (!isStageBlinking)
+            StartCoroutine(BlinkRoutine(duration));
+    }
+
+    private IEnumerator BlinkRoutine(float duration)
+    {
+        isStageBlinking = true;
+
+        float timer = 0f;
+        bool visible = true;
+
+        while (timer < duration)
+        {
+            visible = !visible;
+            sr.enabled = visible;
+
+            yield return new WaitForSeconds(0.1f);
+            timer += 0.1f;
+        }
+
+        sr.enabled = true;
+        isStageBlinking = false;
+    }
+
+    // ================================================================
+    // 🔥 Booster 무적 - 색상 깜빡임
+    // ================================================================
+    public void TriggerInvincibleCustom(float duration)
+    {
+        StartCoroutine(InvincibleColorRoutine(duration));
+    }
+
+    private IEnumerator InvincibleColorRoutine(float duration)
+    {
+        isInvincible = true;
+        col.enabled = false;
+
+        float timer = 0f;
+        bool useAltColor = false;
+
+        Color originalColor = sr.color;
+
+        while (timer < duration)
+        {
+            useAltColor = !useAltColor;
+
+            sr.color = useAltColor ? boosterInvincibleColor : originalColor;
+
+            yield return new WaitForSeconds(0.15f);
+            timer += 0.15f;
+        }
+
+        sr.color = originalColor;
+        col.enabled = true;
+        isInvincible = false;
+    }
+
+    // ================================================================
+    // 🔥 Booster 이동속도 증가
+    // ================================================================
+    public void TriggerCustomSpeedBoost(float multiplier, float duration)
+    {
+        StartCoroutine(CustomSpeedBoostRoutine(multiplier, duration));
+    }
+
+    private IEnumerator CustomSpeedBoostRoutine(float multiplier, float duration)
+    {
+        float original = moveSpeed;
+        moveSpeed = baseMoveSpeed * multiplier;
+
+        yield return new WaitForSeconds(duration);
+
+        moveSpeed = original;
     }
 }
