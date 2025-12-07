@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class HeartItem : MonoBehaviour
+public class ScoreItem : MonoBehaviour
 {
     [Header("Item Move Setting")]
     public float speedMultiplier = 0.7f;  
@@ -8,10 +8,11 @@ public class HeartItem : MonoBehaviour
     public float maxX = 5.5f;
 
     private float baseSpeed;
-    private float horizontalDir;
+    private float horizontalDir;   // -1 또는 +1
 
     void Start()
     {
+        // 씬 안의 ObstacleSpawner에서 carPrefab 가져오기
         ObstacleSpawner spawner = FindObjectOfType<ObstacleSpawner>();
 
         if (spawner != null && spawner.carPrefabs.Length > 0)
@@ -22,9 +23,10 @@ public class HeartItem : MonoBehaviour
         }
         else
         {
-            baseSpeed = 4f;
+            baseSpeed = 4f; // fallback
         }
 
+        // 처음 좌우 방향 랜덤
         horizontalDir = Random.value < 0.5f ? -1f : 1f;
     }
 
@@ -32,7 +34,10 @@ public class HeartItem : MonoBehaviour
     {
         Vector3 pos = transform.position;
 
+        // 🔥 Y축 이동도 multiplier 적용!
         pos.y -= baseSpeed * speedMultiplier * Time.deltaTime;
+
+        // 🔥 X축 이동도 동일하게 multiplier 적용
         pos.x += horizontalDir * baseSpeed * speedMultiplier * Time.deltaTime;
 
         if (pos.x < minX)
@@ -51,28 +56,11 @@ public class HeartItem : MonoBehaviour
         if (pos.y < -13f)
             Destroy(gameObject);
     }
-
-    private void OnTriggerEnter2D(Collider2D other)
+    private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (other.CompareTag("Player"))
+        if (collision.CompareTag("Player"))
         {
-            HeartSystem hs = FindObjectOfType<HeartSystem>();
-            if (hs != null)
-            {
-                // ⭐ 먹기 "직전에" 풀하트인지 검사
-                bool wasFull = hs.IsFullHeart();
-
-                // ❤️ 기존 하트 증가 수행
-                hs.AddHeart();
-
-                // ⭐ 풀하트였다면 점수 증가
-                if (wasFull)
-                {
-                    if (ScoreManager.Instance != null)
-                        ScoreManager.Instance.AddScore(ScoreManager.Instance.fullHeartBonus);
-                }
-            }
-
+            ScoreManager.Instance.AddScore(ScoreManager.Instance.scoreItemAmount);
             Destroy(gameObject);
         }
     }

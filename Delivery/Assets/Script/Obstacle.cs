@@ -35,6 +35,9 @@ public class Obstacle : MonoBehaviour
         // 기본 장애물(자동차)은 하트 감소
         if (hs != null)
             hs.TakeDamage(gameObject);
+        // 점수 감소
+        if (ScoreManager.Instance != null)
+            ScoreManager.Instance.AddScore(ScoreManager.Instance.obstacleHitPenalty);
     }
 
     public void PauseSpeed()

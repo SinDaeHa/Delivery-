@@ -8,7 +8,7 @@ public class HeartSystem : MonoBehaviour
     public int maxHearts = 3;
 
     [Header("UI Locate")]
-    public Vector2 lastHeartPos = new Vector2(-5.3f, -10.4f);
+    public Vector2 lastHeartPos = new Vector2(-5.3f, -10.1f);
     public float heartSpacing = 0.8f;
 
     private GameObject[] hearts;
@@ -92,6 +92,12 @@ public class HeartSystem : MonoBehaviour
         Destroy(hearts[currentHearts]);
         hearts[currentHearts] = null;
     }
+
+    public bool IsFullHeart()
+    {
+        return currentHearts >= maxHearts;
+    }
+
 
     private IEnumerator HeartsBlinkRoutine(float duration)
     {
