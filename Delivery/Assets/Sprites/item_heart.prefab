@@ -104,7 +104,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 977ec130b245fac42a6eee8358569a2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HeartItem
-  speedMultiplier: 0.7
+  speedMultiplier: 0.3
   minX: -5.5
   maxX: 5.5
 --- !u!60 &7131281812656586625

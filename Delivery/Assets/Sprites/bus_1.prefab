@@ -174,5 +174,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f5ca5cdcb8bb3204cbed4a5d5f95f938, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BusObstacle
-  moveSpeed: 4
+  moveSpeed: 23.7
   destroyY: -17

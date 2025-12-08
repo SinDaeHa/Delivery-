@@ -140,6 +140,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d4451ce9d9c4334aa2e6b8c94645103, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScoreItem
-  speedMultiplier: 0.7
+  speedMultiplier: 0.3
   minX: -5.5
   maxX: 5.5

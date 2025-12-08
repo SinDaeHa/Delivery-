@@ -150,7 +150,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a2851e62f93b7f44a75c1f75601bb98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpeedBumpObstacle
-  moveSpeed: 4
+  moveSpeed: 24
   destroyY: -13
   slowMultiplier: 0.5
   slowDuration: 1.5
