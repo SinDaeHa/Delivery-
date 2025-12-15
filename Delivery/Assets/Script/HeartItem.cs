@@ -3,7 +3,7 @@ using UnityEngine;
 public class HeartItem : MonoBehaviour
 {
     [Header("Item Move Setting")]
-    public float speedMultiplier = 0.7f;  
+    public float speedMultiplier = 0.25f;  
     public float minX = -5.5f;
     public float maxX = 5.5f;
 
@@ -12,19 +12,7 @@ public class HeartItem : MonoBehaviour
 
     void Start()
     {
-        ObstacleSpawner spawner = FindObjectOfType<ObstacleSpawner>();
-
-        if (spawner != null && spawner.carPrefabs.Length > 0)
-        {
-            Obstacle obs = spawner.carPrefabs[0].GetComponent<Obstacle>();
-            if (obs != null)
-                baseSpeed = obs.moveSpeed;
-        }
-        else
-        {
-            baseSpeed = 4f;
-        }
-
+        baseSpeed = 24f;
         horizontalDir = Random.value < 0.5f ? -1f : 1f;
     }
 

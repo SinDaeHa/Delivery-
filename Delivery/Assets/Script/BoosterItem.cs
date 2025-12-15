@@ -4,7 +4,7 @@ public class BoosterItem : MonoBehaviour
 {
 
     [Header("Item Move Setting")]
-    public float speedMultiplier = 0.7f;  
+    public float speedMultiplier = 0.25f;  
     public float minX = -5.5f;
     public float maxX = 5.5f;
 
@@ -21,20 +21,7 @@ public class BoosterItem : MonoBehaviour
 
     void Start()
     {
-        // 씬 안의 ObstacleSpawner에서 carPrefab 가져오기
-        ObstacleSpawner spawner = FindObjectOfType<ObstacleSpawner>();
-
-        if (spawner != null && spawner.carPrefabs.Length > 0)
-        {
-            Obstacle obs = spawner.carPrefabs[0].GetComponent<Obstacle>();
-            if (obs != null)
-                baseSpeed = obs.moveSpeed;
-        }
-        else
-        {
-            baseSpeed = 4f; // fallback
-        }
-
+        baseSpeed = 24f; // fallback
         // 처음 좌우 방향 랜덤
         horizontalDir = Random.value < 0.5f ? -1f : 1f;
     }

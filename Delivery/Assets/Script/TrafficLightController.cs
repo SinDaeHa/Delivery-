@@ -24,16 +24,12 @@ public class TrafficLightController : MonoBehaviour
 
     private PlayerController player;
     private HeartSystem heartSystem;
-    private ObstacleSpawner spawner;
-    private AutoLoopBackground bg;   // 🔥 여기 변경됨 (중요!)
+    private AutoLoopBackground bg;
 
     void Start()
     {
         player = FindObjectOfType<PlayerController>();
         heartSystem = FindObjectOfType<HeartSystem>();
-        spawner = FindObjectOfType<ObstacleSpawner>();
-
-        // 🔥 새로운 배경 스크립트
         bg = FindObjectOfType<AutoLoopBackground>();
 
         StartCoroutine(LightCycleRoutine());
@@ -50,13 +46,14 @@ public class TrafficLightController : MonoBehaviour
             isRed = false;
             playerMoved = false;
 
-            if (spawner != null) 
-                spawner.canSpawn = true;
+            // ✅ 게임 상태: 정상
+            if (GameManager.Instance != null)
+                GameManager.Instance.isTrafficRed = false;
 
             FreezeObstacles(false);
 
             if (bg != null)
-                bg.SetRedLight(false);  // 🔥 배경 움직임 ON
+                bg.SetRedLight(false);  // 배경 이동 ON
 
             yield return new WaitForSeconds(greenTime);
 
@@ -66,7 +63,7 @@ public class TrafficLightController : MonoBehaviour
             isRed = false;
 
             if (bg != null)
-                bg.SetRedLight(false); // 움직임 계속
+                bg.SetRedLight(false); // 배경 계속 이동
 
             yield return new WaitForSeconds(yellowTime);
 
@@ -77,13 +74,14 @@ public class TrafficLightController : MonoBehaviour
             isRed = true;
             playerMoved = false;
 
-            if (spawner != null)
-                spawner.canSpawn = false;
+            // ✅ 게임 상태: 빨간불
+            if (GameManager.Instance != null)
+                GameManager.Instance.isTrafficRed = true;
 
             FreezeObstacles(true);
 
             if (bg != null)
-                bg.SetRedLight(true);  // 🔥 배경 멈춤
+                bg.SetRedLight(true);  // 배경 멈춤
 
             float timer = 0f;
 
@@ -91,6 +89,7 @@ public class TrafficLightController : MonoBehaviour
             {
                 timer += Time.deltaTime;
 
+                // 🔥 빨간불에 움직이면 패널티
                 if (!playerMoved && PlayerTryingToMove())
                 {
                     playerMoved = true;
@@ -98,8 +97,11 @@ public class TrafficLightController : MonoBehaviour
                     if (heartSystem != null)
                         heartSystem.TakeDamage(null);
 
-                    player.TriggerSlowdown();
-                    player.TriggerInvincible();
+                    if (player != null)
+                    {
+                        player.TriggerSlowdown();
+                        player.TriggerInvincible();
+                    }
                 }
 
                 yield return null;

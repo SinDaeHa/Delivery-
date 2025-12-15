@@ -5,74 +5,115 @@ using System.Collections;
 
 public class GameManager : MonoBehaviour
 {
+    public static GameManager Instance;
+
+    void Awake()
+    {
+        if (Instance == null)
+            Instance = this;
+        else
+            Destroy(gameObject);
+    }
+
     [Header("Game Over UI")]
     public GameObject gameOverUI;
 
     [Header("Progress Bar")]
     public RectTransform progressBarFill;
-    public float stageDuration = 120f;
+    public float stageDuration = 9999999999f;
     private float stageTimer = 0f;
 
     [Header("Fade Panel")]
     public Image fadePanel;
 
     [Header("Fade Settings")]
-    public float fadeDuration = 1f;     // 페이드 인/아웃 시간
-    public float fadeInWait = 0.5f;     // 씬 시작 시 검은 화면 유지 시간
-    public float fadeOutWait = 1.5f;    // 씬 종료 후 검은 화면 유지 시간
+    public float fadeDuration = 1f;
+    public float fadeInWait = 0.5f;
+    public float fadeOutWait = 1.5f;
 
     [Header("Stage Settings")]
-    public string nextStageName = "";   // 다음 씬 이름(없으면 마지막 스테이지)
+    public string nextStageName = "";
     private bool stageCleared = false;
 
     private bool isGameOver = false;
 
+    // ============================================================
+    // 🔥 난이도 증가 관련
+    // ============================================================
+    [Header("Difficulty Scaling")]
+    public float difficultyTickInterval = 6f;       // 6초
+    public float speedIncreasePerTick = 0.8f;       // 적 속도 증가
+    public float spawnTermIncreasePerTick = -0.03f;   // 스폰텀 증가
+
+    private float difficultyTimer = 0f;
+
+    [HideInInspector] public float enemySpeedBonus = 0f;
+    [HideInInspector] public float spawnTermBonus = 0f;
+
+    // 🚦 신호등 상태
+    [HideInInspector] public bool isTrafficRed = false;
+
     void Start()
     {
-        // 씬 시작 시 페이드 인 실행
         if (fadePanel != null)
             StartCoroutine(StartFadeInRoutine());
     }
 
     void Update()
     {
-        if (isGameOver) return;
-        if (stageCleared) return;
+        if (isGameOver || stageCleared)
+            return;
 
-        // 스테이지 타이머 증가
+        // -------------------------------
+        // 스테이지 타이머
+        // -------------------------------
         stageTimer += Time.deltaTime;
 
-        // 진행 바 채우기
         float t = Mathf.Clamp01(stageTimer / stageDuration);
         if (progressBarFill != null)
             progressBarFill.localScale = new Vector3(t, 1f, 1f);
 
-        // 스테이지 종료
         if (stageTimer >= stageDuration)
         {
             stageCleared = true;
             StartCoroutine(StageClearRoutine());
         }
+
+        // -------------------------------
+        // 🚦 빨간불이면 난이도 증가 멈춤
+        // -------------------------------
+        if (isTrafficRed)
+            return;
+
+        // -------------------------------
+        // 난이도 증가 (틱 방식)
+        // -------------------------------
+        difficultyTimer += Time.deltaTime;
+
+        if (difficultyTimer >= difficultyTickInterval)
+        {
+            difficultyTimer -= difficultyTickInterval;
+
+            enemySpeedBonus += speedIncreasePerTick;
+            spawnTermBonus += spawnTermIncreasePerTick;
+        }
     }
 
     // ============================================================
-    // 🔥 씬 시작 페이드 인
+    // 페이드 인
     // ============================================================
     IEnumerator StartFadeInRoutine()
     {
         Color c = fadePanel.color;
-
-        // 1) 시작 시 검은 화면 유지
         fadePanel.color = new Color(c.r, c.g, c.b, 1f);
+
         yield return new WaitForSecondsRealtime(fadeInWait);
 
-        // 2) 페이드 인
         float time = 0f;
         while (time < fadeDuration)
         {
             float alpha = Mathf.Lerp(1f, 0f, time / fadeDuration);
             fadePanel.color = new Color(c.r, c.g, c.b, alpha);
-
             time += Time.deltaTime;
             yield return null;
         }
@@ -81,13 +122,10 @@ public class GameManager : MonoBehaviour
     }
 
     // ============================================================
-    // 🔥 스테이지 종료 → 페이드 아웃 → 다음 씬으로 전환
+    // 스테이지 종료
     // ============================================================
     IEnumerator StageClearRoutine()
     {
-        Time.timeScale = 1f; // 혹시 모를 GameOver 잔여 상태 방지
-
-        // 🔥 플레이어 충돌 OFF + 깜빡임
         PlayerController player = FindObjectOfType<PlayerController>();
         if (player != null)
         {
@@ -95,13 +133,9 @@ public class GameManager : MonoBehaviour
             player.StartBlinking(fadeDuration + fadeOutWait);
         }
 
-        // 1) 페이드 아웃
         yield return StartCoroutine(FadeOutRoutine());
-
-        // 2) 검은 화면 유지
         yield return new WaitForSecondsRealtime(fadeOutWait);
 
-        // 3) 다음 스테이지 로드
         if (!string.IsNullOrEmpty(nextStageName))
             SceneManager.LoadScene(nextStageName);
     }
@@ -109,13 +143,12 @@ public class GameManager : MonoBehaviour
     IEnumerator FadeOutRoutine()
     {
         Color c = fadePanel.color;
-
         float time = 0f;
+
         while (time < fadeDuration)
         {
             float alpha = Mathf.Lerp(0f, 1f, time / fadeDuration);
             fadePanel.color = new Color(c.r, c.g, c.b, alpha);
-
             time += Time.deltaTime;
             yield return null;
         }
@@ -124,11 +157,12 @@ public class GameManager : MonoBehaviour
     }
 
     // ============================================================
-    // 🔥 게임 오버 처리
+    // 게임 오버
     // ============================================================
     public void GameOver()
     {
-        if (isGameOver) return;
+        if (isGameOver)
+            return;
 
         isGameOver = true;
 

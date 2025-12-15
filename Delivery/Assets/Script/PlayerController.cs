@@ -4,7 +4,7 @@ using System.Collections;
 public class PlayerController : MonoBehaviour
 {
     [Header("Moving Setting")]
-    public float moveSpeed = 10f;
+    public float moveSpeed = 20f;
     public float minX = -4.75f;
     public float maxX = 4.75f;
 

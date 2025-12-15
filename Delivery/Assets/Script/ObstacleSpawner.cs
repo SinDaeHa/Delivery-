@@ -3,53 +3,71 @@ using System.Collections.Generic;
 
 public class ObstacleSpawner : MonoBehaviour
 {
-    [Header("Car Prefabs (Default Cars)")]
+    [Header("Car Prefabs")]
     public GameObject[] carPrefabs;
 
-    [Header("New Obstacle Prefabs")]
+    [Header("Special Obstacles")]
     public GameObject busPrefab;
     public GameObject speedBumpPrefab;
     public GameObject manholePrefab;
 
-    [Header("Toggle Spawn Types")]
-    public bool spawnBus = true;
-    public bool spawnSpeedBump = true;
-    public bool spawnManhole = true;
+    [Header("Spawn Enable (Runtime Auto Unlock)")]
+    public bool spawnBus = false;
+    public bool spawnSpeedBump = false;
+    public bool spawnManhole = false;
+
+    [Header("Unlock Time (Seconds Since Start)")]
+    public float busUnlockTime = 20f;
+    public float speedBumpUnlockTime = 40f;
+    public float manholeUnlockTime = 60f;
 
     [Header("Spawn Settings")]
     public float spawnY = 17f;
     public float[] laneX = new float[4] { -4.5f, -1.5f, 1.5f, 4.5f };
-    public float SpawnTerm = 3f;
+
+    [Header("Spawn Term (Seconds)")]
+    public float baseSpawnTerm = 1f;
 
     private float timer = 0f;
-    private float spawnDistance;
-    private float obstacleSpeed;
+    private float elapsedTime = 0f;
 
-    public bool canSpawn = true;
-
-    // 🔥 버스만 다음 웨이브 등장 금지
     private bool busSpawnedLastWave = false;
-
-    void Start()
-    {
-        Obstacle obs = carPrefabs[0].GetComponent<Obstacle>();
-        if (obs != null)
-            obstacleSpeed = obs.moveSpeed;
-
-        SpriteRenderer sr = carPrefabs[0].GetComponent<SpriteRenderer>();
-        float carHeight = sr.bounds.size.y;
-
-        spawnDistance = carHeight * SpawnTerm;
-    }
 
     void Update()
     {
-        if (!canSpawn) return;
+        // 🚦 빨간불이면 스폰 정지
+        if (GameManager.Instance != null && GameManager.Instance.isTrafficRed)
+            return;
 
+        // -------------------------------
+        // ⏱ 경과 시간 누적
+        // -------------------------------
+        elapsedTime += Time.deltaTime;
+
+        // -------------------------------
+        // 🔓 특수 장애물 해금
+        // -------------------------------
+        if (!spawnBus && elapsedTime >= busUnlockTime)
+            spawnBus = true;
+
+        if (!spawnSpeedBump && elapsedTime >= speedBumpUnlockTime)
+            spawnSpeedBump = true;
+
+        if (!spawnManhole && elapsedTime >= manholeUnlockTime)
+            spawnManhole = true;
+
+        // -------------------------------
+        // ⏱ 스폰 타이머
+        // -------------------------------
         timer += Time.deltaTime;
-        float moved = timer * obstacleSpeed;
 
-        if (moved >= spawnDistance)
+        float bonus = 0f;
+        if (GameManager.Instance != null)
+            bonus = GameManager.Instance.spawnTermBonus;
+
+        float currentSpawnTerm = baseSpawnTerm + bonus;
+
+        if (timer >= currentSpawnTerm)
         {
             SpawnWave();
             timer = 0f;
@@ -61,7 +79,6 @@ public class ObstacleSpawner : MonoBehaviour
         List<int> lanes = new List<int> { 0, 1, 2, 3 };
         int obstacleCount = Random.Range(1, 4);
 
-        // 🔥 이번 웨이브 출현 여부
         bool busSpawnedThisWave = false;
         bool speedBumpSpawnedThisWave = false;
         bool manholeSpawnedThisWave = false;
@@ -84,35 +101,36 @@ public class ObstacleSpawner : MonoBehaviour
             if (prefab == null)
                 continue;
 
-            Vector3 pos = new Vector3(laneX[laneIndex], spawnY, 0f);
-            Instantiate(prefab, pos, Quaternion.identity);
+            Instantiate(
+                prefab,
+                new Vector3(laneX[laneIndex], spawnY, 0f),
+                Quaternion.identity
+            );
         }
 
-        // 🔥 버스만 다음 웨이브 금지
         busSpawnedLastWave = busSpawnedThisWave;
     }
 
     GameObject ChooseObstacle(
-        ref bool busWave,
-        ref bool speedBumpWave,
-        ref bool manholeWave
-    )
+        ref bool busSpawnedThisWave,
+        ref bool speedBumpSpawnedThisWave,
+        ref bool manholeSpawnedThisWave)
     {
         List<GameObject> list = new List<GameObject>();
 
-        // 🔥 버스: 한 웨이브 1회 제한 + 다음웨이브도 금지
-        if (spawnBus && !busSpawnedLastWave && !busWave)
+        // 🚍 버스: 한 웨이브 1개 + 다음 웨이브 금지
+        if (spawnBus && !busSpawnedLastWave && !busSpawnedThisWave)
             list.Add(busPrefab);
 
-        // 🔥 스피드범프: 한 웨이브 1회만
-        if (spawnSpeedBump && !speedBumpWave)
+        // 🟨 과속방지턱: 한 웨이브 1개
+        if (spawnSpeedBump && !speedBumpSpawnedThisWave)
             list.Add(speedBumpPrefab);
 
-        // 🔥 맨홀: 한 웨이브 1회만
-        if (spawnManhole && !manholeWave)
+        // 🕳 맨홀: 한 웨이브 1개
+        if (spawnManhole && !manholeSpawnedThisWave)
             list.Add(manholePrefab);
 
-        // 🔥 기본 자동차는 제한 없음
+        // 🚗 기본 차량은 항상 등장
         foreach (var car in carPrefabs)
             list.Add(car);
 
@@ -121,10 +139,12 @@ public class ObstacleSpawner : MonoBehaviour
 
         GameObject pick = list[Random.Range(0, list.Count)];
 
-        // 🔥 이번 웨이브 출현 기록
-        if (pick == busPrefab) busWave = true;
-        if (pick == speedBumpPrefab) speedBumpWave = true;
-        if (pick == manholePrefab) manholeWave = true;
+        if (pick == busPrefab)
+            busSpawnedThisWave = true;
+        else if (pick == speedBumpPrefab)
+            speedBumpSpawnedThisWave = true;
+        else if (pick == manholePrefab)
+            manholeSpawnedThisWave = true;
 
         return pick;
     }

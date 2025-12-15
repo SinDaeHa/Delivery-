@@ -3,14 +3,24 @@ using UnityEngine;
 public class Obstacle : MonoBehaviour
 {
     [Header("Car Setting")]
-    public float moveSpeed = 4f;
+    public float moveSpeed = 16f;
     public float destroyY = -17f;
 
-    private float originalSpeed;
+    private bool isPaused = false;
 
     void Update()
     {
-        transform.Translate(Vector3.down * moveSpeed * Time.deltaTime);
+        // 🚦 빨간불일 때 완전 정지
+        if (isPaused)
+            return;
+
+        float bonusSpeed = 0f;
+        if (GameManager.Instance != null)
+            bonusSpeed = GameManager.Instance.enemySpeedBonus;
+
+        transform.Translate(
+            Vector3.down * (moveSpeed + bonusSpeed) * Time.deltaTime
+        );
 
         if (transform.position.y < destroyY)
         {
@@ -29,25 +39,28 @@ public class Obstacle : MonoBehaviour
         }
     }
 
-    // 🔥 각 장애물이 override하도록 설계
+    // ============================================================
+    // 🔥 기본 장애물 충돌 처리 (자동차)
+    // ============================================================
     protected virtual void OnPlayerHit(PlayerController player, HeartSystem hs)
     {
-        // 기본 장애물(자동차)은 하트 감소
         if (hs != null)
             hs.TakeDamage(gameObject);
-        // 점수 감소
+
         if (ScoreManager.Instance != null)
             ScoreManager.Instance.AddScore(ScoreManager.Instance.obstacleHitPenalty);
     }
 
+    // ============================================================
+    // 🚦 신호등 제어용
+    // ============================================================
     public void PauseSpeed()
     {
-        originalSpeed = moveSpeed;
-        moveSpeed = 0f;
+        isPaused = true;
     }
 
     public void ResumeSpeed()
     {
-        moveSpeed = originalSpeed;
+        isPaused = false;
     }
 }
