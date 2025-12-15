@@ -7,6 +7,10 @@ public class HeartItem : MonoBehaviour
     public float minX = -5.5f;
     public float maxX = 5.5f;
 
+    [Header("Get Sound")]
+    public AudioClip getSound;
+    public float getSoundVolume = 1f;
+
     private float baseSpeed;
     private float horizontalDir;
 
@@ -59,6 +63,15 @@ public class HeartItem : MonoBehaviour
                     if (ScoreManager.Instance != null)
                         ScoreManager.Instance.AddScore(ScoreManager.Instance.fullHeartBonus);
                 }
+            }
+
+            if (getSound != null)
+            {
+                AudioSource.PlayClipAtPoint(
+                    getSound,
+                    transform.position,
+                    getSoundVolume
+                );
             }
 
             Destroy(gameObject);

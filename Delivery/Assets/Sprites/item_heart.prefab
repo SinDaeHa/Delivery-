@@ -108,6 +108,8 @@ MonoBehaviour:
   speedMultiplier: 0.25
   minX: -5.5
   maxX: 5.5
+  getSound: {fileID: 8300000, guid: 7ac15abf7f0e7114c8391dd3dd5a0429, type: 3}
+  getSoundVolume: 1
 --- !u!60 &7131281812656586625
 PolygonCollider2D:
   m_ObjectHideFlags: 0

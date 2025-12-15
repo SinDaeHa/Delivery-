@@ -11,6 +11,10 @@ public class HeartSystem : MonoBehaviour
     public Vector2 lastHeartPos = new Vector2(-5.3f, -10.1f);
     public float heartSpacing = 0.8f;
 
+    // 🔥 추가: 마지막 하트 경고 오브젝트
+    [Header("Last Heart Warning")]
+    public GameObject lastHeartWarning;
+
     private GameObject[] hearts;
     private int currentHearts;
 
@@ -19,7 +23,6 @@ public class HeartSystem : MonoBehaviour
         currentHearts = maxHearts;
         hearts = new GameObject[maxHearts];
 
-        // hearts[0] = 가장 아래 → 마지막에 사라지는 하트
         for (int i = 0; i < maxHearts; i++)
         {
             float yPos = lastHeartPos.y + heartSpacing * i;
@@ -27,6 +30,10 @@ public class HeartSystem : MonoBehaviour
 
             hearts[i] = Instantiate(heartPrefab, pos, Quaternion.identity, transform);
         }
+
+        // 🔥 시작 시 경고 끄기
+        if (lastHeartWarning != null)
+            lastHeartWarning.SetActive(false);
     }
 
     public void TakeDamage(GameObject enemyObj)
@@ -36,7 +43,6 @@ public class HeartSystem : MonoBehaviour
         if (player != null && player.IsInvincible())
             return;
 
-        // 하트 감소
         currentHearts--;
 
         if (currentHearts >= 0)
@@ -45,38 +51,43 @@ public class HeartSystem : MonoBehaviour
             hearts[currentHearts] = null;
         }
 
-        // 충돌한 car 제거
         if (enemyObj != null)
             Destroy(enemyObj);
 
-        // 하트가 0이면 즉시 게임오버
+        // 🔥 하트 상태 변경 → 경고 업데이트
+        UpdateLastHeartWarning();
+
         if (currentHearts <= 0)
         {
             GameManager gm = FindObjectOfType<GameManager>();
             if (gm != null)
                 gm.GameOver();
+
+            // 🔥 게임오버 시 경고 끄기
+            if (lastHeartWarning != null)
+                lastHeartWarning.SetActive(false);
+
             return;
         }
 
-        // 🔥 플레이어 무적 + 하트 깜빡임 (플레이어 설정 기반)
         player.TriggerSlowdown();
         player.TriggerInvincible();
         StartCoroutine(HeartsBlinkRoutine(player.invincibleTime));
     }
+
     public void AddHeart()
     {
-        // 이미 최대체력이면 회복 안 됨
         if (currentHearts >= maxHearts)
             return;
 
-        // 1) 하트 오브젝트 생성
         float yPos = lastHeartPos.y + heartSpacing * currentHearts;
         Vector3 pos = new Vector3(lastHeartPos.x, yPos, 0);
 
         hearts[currentHearts] = Instantiate(heartPrefab, pos, Quaternion.identity, transform);
-
-        // 2) 체력 증가
         currentHearts++;
+
+        // 🔥 하트 회복 → 경고 업데이트
+        UpdateLastHeartWarning();
     }
 
     public int GetCurrentHearts()
@@ -91,6 +102,9 @@ public class HeartSystem : MonoBehaviour
         currentHearts--;
         Destroy(hearts[currentHearts]);
         hearts[currentHearts] = null;
+
+        // 🔥 강제 제거 시도 경고 업데이트
+        UpdateLastHeartWarning();
     }
 
     public bool IsFullHeart()
@@ -98,6 +112,16 @@ public class HeartSystem : MonoBehaviour
         return currentHearts >= maxHearts;
     }
 
+    void UpdateLastHeartWarning()
+    {
+        if (lastHeartWarning == null)
+            return;
+
+        if (currentHearts == 1)
+            lastHeartWarning.SetActive(true);
+        else
+            lastHeartWarning.SetActive(false);
+    }
 
     private IEnumerator HeartsBlinkRoutine(float duration)
     {
@@ -108,7 +132,6 @@ public class HeartSystem : MonoBehaviour
         {
             visible = !visible;
 
-            // 남아 있는 하트만 깜빡임
             for (int i = 0; i < maxHearts; i++)
             {
                 if (hearts[i] != null)
@@ -124,7 +147,6 @@ public class HeartSystem : MonoBehaviour
             timer += interval;
         }
 
-        // 모든 하트 다시 보이게
         for (int i = 0; i < maxHearts; i++)
         {
             if (hearts[i] != null)
@@ -135,5 +157,3 @@ public class HeartSystem : MonoBehaviour
         }
     }
 }
-
-

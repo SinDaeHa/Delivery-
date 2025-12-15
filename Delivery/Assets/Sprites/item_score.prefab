@@ -144,3 +144,5 @@ MonoBehaviour:
   speedMultiplier: 0.25
   minX: -5.5
   maxX: 5.5
+  getSound: {fileID: 8300000, guid: 4b19df48cb468a44eaceea82b0a80f6e, type: 3}
+  getSoundVolume: 1

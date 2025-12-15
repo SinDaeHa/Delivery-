@@ -108,6 +108,8 @@ MonoBehaviour:
   speedMultiplier: 0.25
   minX: -5.5
   maxX: 5.5
+  getSound: {fileID: 8300000, guid: d3033de11fcf2314e986d8eae8e280cf, type: 3}
+  getSoundVolume: 1
   boostMultiplier: 1.5
   boostDuration: 5
   giveInvincibility: 1

@@ -6,21 +6,16 @@ public class Obstacle : MonoBehaviour
     public float moveSpeed = 16f;
     public float destroyY = -17f;
 
-    private bool isPaused = false;
+    [Header("Hit Sound")]
+    public AudioClip hitSound;      // 🔥 충돌 사운드
+    public float hitSoundVolume = 1f;
+
+    private float originalSpeed;
+    private bool hasHitPlayer = false;   // 🔥 중복 재생 방지
 
     void Update()
     {
-        // 🚦 빨간불일 때 완전 정지
-        if (isPaused)
-            return;
-
-        float bonusSpeed = 0f;
-        if (GameManager.Instance != null)
-            bonusSpeed = GameManager.Instance.enemySpeedBonus;
-
-        transform.Translate(
-            Vector3.down * (moveSpeed + bonusSpeed) * Time.deltaTime
-        );
+        transform.Translate(Vector3.down * moveSpeed * Time.deltaTime);
 
         if (transform.position.y < destroyY)
         {
@@ -30,8 +25,23 @@ public class Obstacle : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (hasHitPlayer)
+            return;
+
         if (other.CompareTag("Player"))
         {
+            hasHitPlayer = true;
+
+            // 🔊 충돌 사운드 재생
+            if (hitSound != null)
+            {
+                AudioSource.PlayClipAtPoint(
+                    hitSound,
+                    transform.position,
+                    hitSoundVolume
+                );
+            }
+
             PlayerController player = other.GetComponent<PlayerController>();
             HeartSystem hs = FindObjectOfType<HeartSystem>();
 
@@ -39,28 +49,25 @@ public class Obstacle : MonoBehaviour
         }
     }
 
-    // ============================================================
-    // 🔥 기본 장애물 충돌 처리 (자동차)
-    // ============================================================
+    // 🔥 각 장애물이 override하도록 설계
     protected virtual void OnPlayerHit(PlayerController player, HeartSystem hs)
     {
+        // 기본 장애물(자동차)은 하트 감소
         if (hs != null)
             hs.TakeDamage(gameObject);
-
-        if (ScoreManager.Instance != null)
-            ScoreManager.Instance.AddScore(ScoreManager.Instance.obstacleHitPenalty);
     }
 
-    // ============================================================
-    // 🚦 신호등 제어용
-    // ============================================================
+    // -------------------------------------------------
+    // 신호등 정지 / 재개
+    // -------------------------------------------------
     public void PauseSpeed()
     {
-        isPaused = true;
+        originalSpeed = moveSpeed;
+        moveSpeed = 0f;
     }
 
     public void ResumeSpeed()
     {
-        isPaused = false;
+        moveSpeed = originalSpeed;
     }
 }

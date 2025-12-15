@@ -177,3 +177,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BusObstacle
   moveSpeed: 15.8
   destroyY: -17
+  hitSound: {fileID: 8300000, guid: b72e47b0c9142f74989c1a66d2d50691, type: 3}
+  hitSoundVolume: 1

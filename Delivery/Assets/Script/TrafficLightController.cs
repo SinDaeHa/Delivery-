@@ -19,6 +19,10 @@ public class TrafficLightController : MonoBehaviour
     public float redMinTime = 4f;
     public float redMaxTime = 6f;
 
+    [Header("Sign Sound")]
+    public AudioClip signSound;
+    public float signSoundVolume = 1f;
+
     private bool isRed = false;
     private bool playerMoved = false;
 
@@ -61,10 +65,17 @@ public class TrafficLightController : MonoBehaviour
             ShowLight("YELLOW");
 
             isRed = false;
-
+            if (signSound != null)
+            {
+                AudioSource.PlayClipAtPoint(
+                    signSound,
+                    transform.position,
+                    signSoundVolume
+                );
+            }
             if (bg != null)
                 bg.SetRedLight(false); // 배경 계속 이동
-
+            
             yield return new WaitForSeconds(yellowTime);
 
             // ---------------- RED ----------------
@@ -73,7 +84,14 @@ public class TrafficLightController : MonoBehaviour
 
             isRed = true;
             playerMoved = false;
-
+            if (signSound != null)
+            {
+                AudioSource.PlayClipAtPoint(
+                    signSound,
+                    transform.position,
+                    signSoundVolume
+                );
+            }
             // ✅ 게임 상태: 빨간불
             if (GameManager.Instance != null)
                 GameManager.Instance.isTrafficRed = true;

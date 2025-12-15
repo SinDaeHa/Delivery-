@@ -189,3 +189,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ManholeObstacle
   moveSpeed: 16
   destroyY: -13
+  hitSound: {fileID: 8300000, guid: 99aff3c71be70d2428c1e2ab1dcfeee0, type: 3}
+  hitSoundVolume: 1

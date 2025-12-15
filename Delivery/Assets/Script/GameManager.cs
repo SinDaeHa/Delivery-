@@ -35,68 +35,116 @@ public class GameManager : MonoBehaviour
     public string nextStageName = "";
     private bool stageCleared = false;
 
+    [Header("Scene Names")]
+    public string currentStageSceneName = "Stage_1";
+    public string mainMenuSceneName = "MainMenu";
+
     private bool isGameOver = false;
+
+    // ============================================================
+    // 🔥 BGM 설정
+    // ============================================================
+    [Header("Stage BGM")]
+    public AudioSource bgmSource;
+    public AudioClip stageBgm;
+    public float bgmFadeInTime = 1.5f;
+    public float bgmVolume = 1f;   // Inspector에서 조절
 
     // ============================================================
     // 🔥 난이도 증가 관련
     // ============================================================
     [Header("Difficulty Scaling")]
-    public float difficultyTickInterval = 6f;       // 6초
-    public float speedIncreasePerTick = 0.8f;       // 적 속도 증가
-    public float spawnTermIncreasePerTick = -0.03f;   // 스폰텀 증가
+    public float difficultyTickInterval = 6f;
+    public float speedIncreasePerTick = 0.8f;
+    public float spawnTermIncreasePerTick = -0.025f;
 
     private float difficultyTimer = 0f;
 
     [HideInInspector] public float enemySpeedBonus = 0f;
     [HideInInspector] public float spawnTermBonus = 0f;
 
-    // 🚦 신호등 상태
     [HideInInspector] public bool isTrafficRed = false;
 
     void Start()
     {
         if (fadePanel != null)
             StartCoroutine(StartFadeInRoutine());
+
+        PlayStageBGM();
     }
 
     void Update()
     {
-        if (isGameOver || stageCleared)
+        // 🔥 추가: 실시간 볼륨 반영
+        if (bgmSource != null)
+            bgmSource.volume = bgmVolume;
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            RestartStage();
+        }
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            GoToMainMenu();
+        }
+
+        if (isGameOver)
             return;
 
-        // -------------------------------
-        // 스테이지 타이머
-        // -------------------------------
         stageTimer += Time.deltaTime;
 
         float t = Mathf.Clamp01(stageTimer / stageDuration);
         if (progressBarFill != null)
             progressBarFill.localScale = new Vector3(t, 1f, 1f);
 
-        if (stageTimer >= stageDuration)
+        if (!stageCleared && stageTimer >= stageDuration)
         {
             stageCleared = true;
             StartCoroutine(StageClearRoutine());
         }
 
-        // -------------------------------
-        // 🚦 빨간불이면 난이도 증가 멈춤
-        // -------------------------------
         if (isTrafficRed)
             return;
 
-        // -------------------------------
-        // 난이도 증가 (틱 방식)
-        // -------------------------------
         difficultyTimer += Time.deltaTime;
 
         if (difficultyTimer >= difficultyTickInterval)
         {
             difficultyTimer -= difficultyTickInterval;
-
             enemySpeedBonus += speedIncreasePerTick;
             spawnTermBonus += spawnTermIncreasePerTick;
         }
+    }
+
+    // ============================================================
+    // BGM 제어
+    // ============================================================
+    void PlayStageBGM()
+    {
+        if (bgmSource == null || stageBgm == null)
+            return;
+
+        bgmSource.clip = stageBgm;
+        bgmSource.loop = true;
+        bgmSource.volume = 0f;
+        bgmSource.Play();
+
+        StartCoroutine(FadeInBGM());
+    }
+
+    IEnumerator FadeInBGM()
+    {
+        float timer = 0f;
+
+        while (timer < bgmFadeInTime)
+        {
+            timer += Time.unscaledDeltaTime;
+            bgmSource.volume = Mathf.Lerp(0f, bgmVolume, timer / bgmFadeInTime);
+            yield return null;
+        }
+
+        bgmSource.volume = bgmVolume;
     }
 
     // ============================================================
@@ -114,7 +162,7 @@ public class GameManager : MonoBehaviour
         {
             float alpha = Mathf.Lerp(1f, 0f, time / fadeDuration);
             fadePanel.color = new Color(c.r, c.g, c.b, alpha);
-            time += Time.deltaTime;
+            time += Time.unscaledDeltaTime;
             yield return null;
         }
 
@@ -149,7 +197,7 @@ public class GameManager : MonoBehaviour
         {
             float alpha = Mathf.Lerp(0f, 1f, time / fadeDuration);
             fadePanel.color = new Color(c.r, c.g, c.b, alpha);
-            time += Time.deltaTime;
+            time += Time.unscaledDeltaTime;
             yield return null;
         }
 
@@ -169,6 +217,21 @@ public class GameManager : MonoBehaviour
         if (gameOverUI != null)
             gameOverUI.SetActive(true);
 
+        if (bgmSource != null && bgmSource.isPlaying)
+            bgmSource.Stop();
+
         Time.timeScale = 0f;
+    }
+
+    void RestartStage()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(currentStageSceneName);
+    }
+
+    void GoToMainMenu()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(mainMenuSceneName);
     }
 }

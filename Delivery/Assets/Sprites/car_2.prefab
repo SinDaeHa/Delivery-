@@ -107,6 +107,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Obstacle
   moveSpeed: 16.4
   destroyY: -17
+  hitSound: {fileID: 8300000, guid: b72e47b0c9142f74989c1a66d2d50691, type: 3}
+  hitSoundVolume: 1
 --- !u!60 &-1184115118748507882
 PolygonCollider2D:
   m_ObjectHideFlags: 0

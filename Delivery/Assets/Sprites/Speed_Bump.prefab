@@ -153,5 +153,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpeedBumpObstacle
   moveSpeed: 16
   destroyY: -13
+  hitSound: {fileID: 8300000, guid: db6e85c3a589da84f86ba34d2f013198, type: 3}
+  hitSoundVolume: 1
   slowMultiplier: 0.5
   slowDuration: 1.5

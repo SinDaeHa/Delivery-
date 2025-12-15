@@ -8,6 +8,10 @@ public class BoosterItem : MonoBehaviour
     public float minX = -5.5f;
     public float maxX = 5.5f;
 
+    [Header("Get Sound")]
+    public AudioClip getSound;
+    public float getSoundVolume = 1f;
+
     private float baseSpeed;
     private float horizontalDir;   // -1 또는 +1
 
@@ -65,6 +69,15 @@ public class BoosterItem : MonoBehaviour
                 // 무적 활성화
                 if (giveInvincibility)
                     pc.TriggerInvincibleCustom(invincibleDuration);
+            }
+
+            if (getSound != null)
+            {
+                AudioSource.PlayClipAtPoint(
+                    getSound,
+                    transform.position,
+                    getSoundVolume
+                );
             }
 
             Destroy(gameObject);
